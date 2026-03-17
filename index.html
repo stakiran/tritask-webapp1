@@ -771,96 +771,26 @@
     const lines = getLines();
     const t = today();
 
-    // Separate separator lines (containing ----) and task lines
-    // We'll do a proper tritask sort:
-    // Sort key determines section, then date, then within same date keep order
-    const parsed = lines.map((line, i) => {
+    // Recalculate sort keys based on actual dates, then sort all lines lexicographically
+    const sorted = lines.map(line => {
       const p = parseTaskLine(line);
-      return { line, parsed: p, origIndex: i };
+      if (!p || p.task.includes('----')) return line; // non-task lines and separators stay as-is
+
+      const hasBothTimes = p.start && p.end && p.start !== '00:00' && p.end !== '00:00';
+      let sort;
+      if (hasBothTimes && p.date === t) {
+        sort = '1';
+      } else if (hasBothTimes && p.date < t) {
+        sort = '4';
+      } else if (p.date <= t) {
+        sort = '2';
+      } else {
+        sort = '3';
+      }
+      return buildTaskLine(sort, p.date, p.dow, p.start, p.end, p.task);
     });
 
-    // Sort: by sort_key first, then by date
-    // sort_key: 1 = done today, 2 = today todo, 3 = tomorrow+, 4 = yesterday done
-    // But we need to recalculate sort keys based on actual dates
-    const result = [];
-    const inbox = [];
-    const todayDone = [];
-    const todayTodo = [];
-    const futureTodo = [];
-    const pastDone = [];
-    const other = []; // non-task lines not associated with sections
-
-    for (const item of parsed) {
-      if (!item.parsed) {
-        // Could be separator, blank line, or inbox text
-        other.push(item);
-        continue;
-      }
-
-      const p = item.parsed;
-      const taskDate = p.date;
-      const hasBothTimes = p.start && p.end && p.start !== '00:00' && p.end !== '00:00';
-      const isSeparator = p.task.includes('----');
-
-      if (isSeparator) {
-        other.push(item);
-        continue;
-      }
-
-      if (hasBothTimes && taskDate === t) {
-        // Done today
-        const newLine = buildTaskLine('1', p.date, p.dow, p.start, p.end, p.task);
-        todayDone.push(newLine);
-      } else if (hasBothTimes && taskDate < t) {
-        // Done in past
-        const newLine = buildTaskLine('4', p.date, p.dow, p.start, p.end, p.task);
-        pastDone.push(newLine);
-      } else if (taskDate <= t) {
-        // Today (or overdue -> treat as today)
-        const newLine = buildTaskLine('2', t, dayOfWeek(t), p.start, p.end, p.task);
-        todayTodo.push(newLine);
-      } else {
-        // Future
-        const newLine = buildTaskLine('3', p.date, p.dow, p.start, p.end, p.task);
-        futureTodo.push(newLine);
-      }
-    }
-
-    // Each array's line format is "sort date dow ..." so lexicographic sort works
-    todayDone.sort();
-    todayTodo.sort();
-    futureTodo.sort();
-    pastDone.sort();
-
-    // Rebuild with separators
-    const tom = addDays(t, 1);
-    const past = addDays(t, -1);
-    const dowT = dayOfWeek(t);
-    const dowTom = dayOfWeek(tom);
-    const dowPast = dayOfWeek(past);
-
-    // Find inbox lines (lines before first task-like separator, excluding blanks and the INBOX separator itself)
-    const inboxLines = [];
-    for (const item of other) {
-      if (item.parsed && item.parsed.task.includes('----')) break;
-      if (item.line.trim() !== '' && !item.line.includes('---- INBOX')) {
-        inboxLines.push(item.line);
-      }
-    }
-
-    const sorted = [
-      `                              ---- INBOX`,
-      ...inboxLines.filter(l => !l.includes('---- INBOX')),
-      `1 ${t} ${dowT} 00:00 00:00  ---- TODAY DONE hold:0`,
-      ...(todayDone.length ? todayDone : []),
-      `2 ${t} ${dowT}              ---- TODAY TODO hold:0`,
-      ...(todayTodo.length ? todayTodo : []),
-      `3 ${tom} ${dowTom}              ---- TOMORROW TODO hold:1`,
-      ...(futureTodo.length ? futureTodo : []),
-      `4 ${past} ${dowPast} 00:00 00:00  ---- YESTERDAY DONE`,
-      ...(pastDone.length ? pastDone : []),
-    ];
-
+    sorted.sort();
     setLines(sorted);
     $editor.focus();
     showToast('ソートしました');

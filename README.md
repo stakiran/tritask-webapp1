@@ -2,6 +2,9 @@
 [Tritask](https://tritask.github.io/tritask-web/) をウェブアプリ化してみたものです。
 
 ## こちらからアクセス: <https://stakiran.github.io/tritask-webapp1/>
+Google アカウントでログインします。Google に案内されるとおり、変な情報を連携したりはしません。
+
+不安な方は、このリポジトリを clone して、ローカルで index.html を動かすこともできます（ブラウザの localStorage に保存されます）。
 
 ## 注意点
 - あくまでプロトタイプなので、個人情報その他重要な情報は扱わないでください

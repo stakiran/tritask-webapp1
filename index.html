@@ -706,6 +706,39 @@
     showToast(`開始: ${time}`);
   }
 
+  function parseRepeat(taskText) {
+    const m = taskText.match(/\brep:(\d+)\b/);
+    return m ? parseInt(m[1], 10) : null;
+  }
+
+  function parseSkip(taskText) {
+    const m = taskText.match(/\bskip:([^\s]+)/);
+    return m ? m[1] : null;
+  }
+
+  function shouldSkipDate(dateStr, skipStr) {
+    if (!skipStr) return false;
+    const d = new Date(dateStr.replace(/\//g, '-'));
+    const jsDay = d.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
+    const dayMap = { '日': 0, '月': 1, '火': 2, '水': 3, '木': 4, '金': 5, '土': 6 };
+    for (const ch of skipStr) {
+      if (ch === '平' && jsDay >= 1 && jsDay <= 5) return true;
+      if (ch === '休' && (jsDay === 0 || jsDay === 6)) return true;
+      if (dayMap[ch] !== undefined && dayMap[ch] === jsDay) return true;
+    }
+    return false;
+  }
+
+  function calcNextRepeatDate(baseDate, repDays, skipStr) {
+    let candidate = addDays(baseDate, repDays);
+    // Skip matching days (up to 365 iterations to avoid infinite loop)
+    for (let i = 0; i < 365; i++) {
+      if (!shouldSkipDate(candidate, skipStr)) break;
+      candidate = addDays(candidate, 1);
+    }
+    return candidate;
+  }
+
   function endTask() {
     const lines = getLines();
     const idx = getCurrentLineIndex();
@@ -717,9 +750,20 @@
     const time = nowTime();
     // Set sort key to 1 (done)
     lines[idx] = buildTaskLine('1', parsed.date, parsed.dow, parsed.start, time, parsed.task);
+
+    // Handle routine task (rep:N)
+    const repDays = parseRepeat(parsed.task);
+    if (repDays) {
+      const skipStr = parseSkip(parsed.task);
+      const nextDate = calcNextRepeatDate(parsed.date, repDays, skipStr);
+      const nextDow = dayOfWeek(nextDate);
+      const newLine = buildTaskLine('2', nextDate, nextDow, null, null, parsed.task);
+      lines.splice(idx + 1, 0, newLine);
+    }
+
     setLines(lines);
     $editor.focus();
-    showToast(`終了: ${time}`);
+    showToast(repDays ? `終了: ${time}（ルーチン複製済）` : `終了: ${time}`);
   }
 
   function duplicateTask() {

@@ -846,11 +846,13 @@
     const dowTom = dayOfWeek(tom);
     const dowPast = dayOfWeek(past);
 
-    // Find inbox lines (lines before first task-like separator)
+    // Find inbox lines (lines before first task-like separator, excluding blanks and the INBOX separator itself)
     const inboxLines = [];
     for (const item of other) {
       if (item.parsed && item.parsed.task.includes('----')) break;
-      inboxLines.push(item.line);
+      if (item.line.trim() !== '' && !item.line.includes('---- INBOX')) {
+        inboxLines.push(item.line);
+      }
     }
 
     const sorted = [

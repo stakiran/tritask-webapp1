@@ -1,6 +1,8 @@
 # tritask-webapp1
 [Tritask](https://tritask.github.io/tritask-web/) をウェブアプリ化してみたものです。
 
+![Image](https://github.com/user-attachments/assets/5a823b09-be3f-46b5-85aa-475e2671aae4)
+
 ## こちらからアクセス: <https://stakiran.github.io/tritask-webapp1/>
 Google アカウントでログインします。Google に案内されるとおり、変な情報を連携したりはしません。
 

@@ -986,16 +986,16 @@
     const dowPast = dayOfWeek(past);
     return [
       `                              ---- INBOX`,
-      `1 ${t} ${dowT} 00:00 00:00  ---- TODAY DONE hold:0`,
+      `1 ${t} ${dowT} 00:00 00:00  ---- 今日やった hold:0`,
       `1 ${t} ${dowT} 09:00 09:45 メールチェック`,
       `1 ${t} ${dowT} 10:00 11:30 週次レポート作成`,
-      `2 ${t} ${dowT}             ---- TODAY TODO hold:0`,
+      `2 ${t} ${dowT}             ---- 今日やる hold:0`,
       `2 ${t} ${dowT}             企画書のドラフト作成`,
       `2 ${t} ${dowT}             日報を書く rep:1`,
-      `3 ${tom} ${dowTom}             ---- TOMORROW TODO hold:1`,
+      `3 ${tom} ${dowTom}             ---- 明日以降やる hold:1`,
       `3 ${tom} ${dowTom}             チームミーティング rep:7`,
       `3 ${tom2} ${dowTom2}             プレゼン資料の準備`,
-      `4 ${past} ${dowPast} 00:00 00:00  ---- YESTERDAY DONE`,
+      `4 ${past} ${dowPast} 00:00 00:00  ---- 昨日以前やった`,
       `4 ${past} ${dowPast} 13:00 14:00 コードレビュー`,
       `4 ${past} ${dowPast} 15:00 15:30 1on1ミーティング rep:7`,
     ].join('\n');

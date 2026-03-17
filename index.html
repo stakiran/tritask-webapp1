@@ -825,19 +825,11 @@
       }
     }
 
-    // Sort future by date
-    futureTodo.sort((a, b) => {
-      const da = a.substring(2, 12);
-      const db = b.substring(2, 12);
-      return da.localeCompare(db);
-    });
-
-    // Sort past done by date descending
-    pastDone.sort((a, b) => {
-      const da = a.substring(2, 12);
-      const db = b.substring(2, 12);
-      return db.localeCompare(da);
-    });
+    // Each array's line format is "sort date dow ..." so lexicographic sort works
+    todayDone.sort();
+    todayTodo.sort();
+    futureTodo.sort();
+    pastDone.sort();
 
     // Rebuild with separators
     const tom = addDays(t, 1);

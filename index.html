@@ -450,25 +450,33 @@
 
 <!-- Firebase SDK -->
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
-  import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
-  import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+  // ── Environment Detection ──
+  const isLocal = location.protocol === 'file:'
+    || location.hostname === 'localhost'
+    || location.hostname === '127.0.0.1';
 
-  // ── Firebase Config ──
-  const firebaseConfig = {
-    apiKey: "AIzaSyA4J10WimhpWtfdwqJHBDxNmPwF4WVJnPg",
-    authDomain: "tritask-web.firebaseapp.com",
-    projectId: "tritask-web",
-    storageBucket: "tritask-web.firebasestorage.app",
-    messagingSenderId: "610643806865",
-    appId: "1:610643806865:web:1b6816ad4ee5b6b93c0d30",
-    measurementId: "G-NRSFKX34R0"
-  };
+  let auth, db, provider;
 
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db = getFirestore(app);
-  const provider = new GoogleAuthProvider();
+  if (!isLocal) {
+    const { initializeApp } = await import("https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js");
+    const { getAuth, GoogleAuthProvider } = await import("https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js");
+    const { getFirestore } = await import("https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js");
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyA4J10WimhpWtfdwqJHBDxNmPwF4WVJnPg",
+      authDomain: "tritask-web.firebaseapp.com",
+      projectId: "tritask-web",
+      storageBucket: "tritask-web.firebasestorage.app",
+      messagingSenderId: "610643806865",
+      appId: "1:610643806865:web:1b6816ad4ee5b6b93c0d30",
+      measurementId: "G-NRSFKX34R0"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    auth = getAuth(app);
+    db = getFirestore(app);
+    provider = new GoogleAuthProvider();
+  }
 
   // ── DOM ──
   const $loading = document.getElementById('loading');
@@ -582,9 +590,16 @@
     setTimeout(() => $toast.classList.remove('show'), 2000);
   }
 
-  // ── Firebase Operations ──
+  // ── Storage Operations ──
+  const LOCAL_STORAGE_KEY = 'tritask-local-content';
+
   async function loadData(uid) {
+    if (isLocal) {
+      const content = localStorage.getItem(LOCAL_STORAGE_KEY);
+      return content !== null ? content : null;
+    }
     try {
+      const { doc, getDoc } = await import("https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js");
       const snap = await getDoc(doc(db, 'users', uid));
       if (snap.exists()) {
         return snap.data().content || '';
@@ -598,9 +613,17 @@
   }
 
   async function saveData(uid, content) {
+    if (isLocal) {
+      localStorage.setItem(LOCAL_STORAGE_KEY, content);
+      $saveIndicator.textContent = '保存済(local)';
+      $saveIndicator.className = 'save-indicator saved';
+      setTimeout(() => { $saveIndicator.textContent = ''; }, 2000);
+      return;
+    }
     $saveIndicator.textContent = '保存中...';
     $saveIndicator.className = 'save-indicator saving';
     try {
+      const { doc, setDoc, serverTimestamp } = await import("https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js");
       await setDoc(doc(db, 'users', uid), {
         content,
         updatedAt: serverTimestamp()
@@ -967,47 +990,71 @@
   document.getElementById('btn-export').addEventListener('click', exportFile);
 
   // ── Auth ──
-  document.getElementById('btn-login').addEventListener('click', async () => {
-    try {
-      await signInWithPopup(auth, provider);
-    } catch (e) {
-      console.error('Login error:', e);
-      showToast('ログインに失敗しました');
-    }
-  });
-
-  document.getElementById('btn-logout').addEventListener('click', async () => {
-    await signOut(auth);
-  });
-
-  onAuthStateChanged(auth, async (user) => {
+  if (isLocal) {
+    // Local mode: skip login, go straight to editor
     $loading.style.display = 'none';
+    $loginScreen.style.display = 'none';
+    $app.style.display = 'flex';
+    $userName.textContent = 'local';
+    currentUser = { uid: 'local' };
 
-    if (user) {
-      currentUser = user;
-      $loginScreen.style.display = 'none';
-      $app.style.display = 'flex';
-      $userName.textContent = user.displayName || user.email;
-
-      // Load data
-      const content = await loadData(user.uid);
-      if (content !== null) {
-        $editor.value = content;
-      } else {
-        // New user - set default content
-        $editor.value = getDefaultContent();
-        await saveData(user.uid, $editor.value);
-      }
-
-      updateStatus();
-      $editor.focus();
+    const content = await loadData('local');
+    if (content !== null) {
+      $editor.value = content;
     } else {
-      currentUser = null;
-      $loginScreen.style.display = 'flex';
-      $app.style.display = 'none';
-      $editor.value = '';
+      $editor.value = getDefaultContent();
+      await saveData('local', $editor.value);
     }
-  });
+
+    updateStatus();
+    $editor.focus();
+
+    document.getElementById('btn-logout').addEventListener('click', () => {
+      showToast('ローカルモードではログアウトできません');
+    });
+  } else {
+    const { signInWithPopup, onAuthStateChanged, signOut } = await import("https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js");
+
+    document.getElementById('btn-login').addEventListener('click', async () => {
+      try {
+        await signInWithPopup(auth, provider);
+      } catch (e) {
+        console.error('Login error:', e);
+        showToast('ログインに失敗しました');
+      }
+    });
+
+    document.getElementById('btn-logout').addEventListener('click', async () => {
+      await signOut(auth);
+    });
+
+    onAuthStateChanged(auth, async (user) => {
+      $loading.style.display = 'none';
+
+      if (user) {
+        currentUser = user;
+        $loginScreen.style.display = 'none';
+        $app.style.display = 'flex';
+        $userName.textContent = user.displayName || user.email;
+
+        const content = await loadData(user.uid);
+        if (content !== null) {
+          $editor.value = content;
+        } else {
+          $editor.value = getDefaultContent();
+          await saveData(user.uid, $editor.value);
+        }
+
+        updateStatus();
+        $editor.focus();
+      } else {
+        currentUser = null;
+        $loginScreen.style.display = 'flex';
+        $app.style.display = 'none';
+        $editor.value = '';
+      }
+    });
+  }
 </script>
 
 </body>

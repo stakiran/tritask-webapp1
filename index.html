@@ -857,16 +857,15 @@
 
     const sorted = [
       `                              ---- INBOX`,
-      ``,
       ...inboxLines.filter(l => !l.includes('---- INBOX')),
       `1 ${t} ${dowT} 00:00 00:00  ---- TODAY DONE hold:0`,
-      ...(todayDone.length ? todayDone : [``]),
+      ...(todayDone.length ? todayDone : []),
       `2 ${t} ${dowT}              ---- TODAY TODO hold:0`,
-      ...(todayTodo.length ? todayTodo : [``]),
+      ...(todayTodo.length ? todayTodo : []),
       `3 ${tom} ${dowTom}              ---- TOMORROW TODO hold:1`,
-      ...(futureTodo.length ? futureTodo : [``]),
+      ...(futureTodo.length ? futureTodo : []),
       `4 ${past} ${dowPast} 00:00 00:00  ---- YESTERDAY DONE`,
-      ...(pastDone.length ? pastDone : [``]),
+      ...(pastDone.length ? pastDone : []),
     ];
 
     setLines(sorted);

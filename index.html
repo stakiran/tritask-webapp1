@@ -533,7 +533,7 @@
     if (m1b) {
       return { sort: m1b[1], date: m1b[2], dow: m1b[3], start: m1b[4], end: null, task: m1b[5], raw: line, hasTimes: true };
     }
-    const m2 = line.match(/^(\d)\s+(\d{4}\/\d{2}\/\d{2})\s+(\w{3})\s{12}(.*)$/);
+    const m2 = line.match(/^(\d)\s+(\d{4}\/\d{2}\/\d{2})\s+(\w{3})\s{13}(.*)$/);
     if (m2) {
       return { sort: m2[1], date: m2[2], dow: m2[3], start: null, end: null, task: m2[4], raw: line, hasTimes: false };
     }
@@ -551,7 +551,7 @@
     if (start) {
       return `${sort} ${date} ${dow} ${start}       ${task}`;
     }
-    return `${sort} ${date} ${dow}            ${task}`;
+    return `${sort} ${date} ${dow}             ${task}`;
   }
 
   function getDefaultContent() {
@@ -566,9 +566,9 @@
       ``,
       `1 ${t} ${dowT} 00:00 00:00  ---- TODAY DONE hold:0`,
       ``,
-      `2 ${t} ${dowT}              ---- TODAY TODO hold:0`,
+      `2 ${t} ${dowT}             ---- TODAY TODO hold:0`,
       ``,
-      `3 ${tom} ${dowTom}              ---- TOMORROW TODO hold:1`,
+      `3 ${tom} ${dowTom}             ---- TOMORROW TODO hold:1`,
       ``,
       `4 ${past} ${dowPast} 00:00 00:00  ---- YESTERDAY DONE`,
       ``,
@@ -942,12 +942,12 @@
       `1 ${t} ${dowT} 00:00 00:00  ---- TODAY DONE hold:0`,
       `1 ${t} ${dowT} 09:00 09:45 メールチェック`,
       `1 ${t} ${dowT} 10:00 11:30 週次レポート作成`,
-      `2 ${t} ${dowT}              ---- TODAY TODO hold:0`,
-      `2 ${t} ${dowT}            企画書のドラフト作成`,
-      `2 ${t} ${dowT}            日報を書く rep:1`,
-      `3 ${tom} ${dowTom}              ---- TOMORROW TODO hold:1`,
-      `3 ${tom} ${dowTom}            チームミーティング rep:7`,
-      `3 ${tom2} ${dowTom2}            プレゼン資料の準備`,
+      `2 ${t} ${dowT}             ---- TODAY TODO hold:0`,
+      `2 ${t} ${dowT}             企画書のドラフト作成`,
+      `2 ${t} ${dowT}             日報を書く rep:1`,
+      `3 ${tom} ${dowTom}             ---- TOMORROW TODO hold:1`,
+      `3 ${tom} ${dowTom}             チームミーティング rep:7`,
+      `3 ${tom2} ${dowTom2}             プレゼン資料の準備`,
       `4 ${past} ${dowPast} 00:00 00:00  ---- YESTERDAY DONE`,
       `4 ${past} ${dowPast} 13:00 14:00 コードレビュー`,
       `4 ${past} ${dowPast} 15:00 15:30 1on1ミーティング rep:7`,

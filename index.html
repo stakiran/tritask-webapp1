@@ -1,0 +1,1050 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tritask Web</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f1117;
+    --bg-surface: #161822;
+    --bg-elevated: #1c1f2e;
+    --bg-hover: #252840;
+    --border: #2a2d42;
+    --text: #c9cdd8;
+    --text-dim: #6b7084;
+    --text-bright: #e8eaf0;
+    --accent: #7aa2f7;
+    --accent-dim: #3d5a9e;
+    --green: #9ece6a;
+    --green-dim: #4a6a2a;
+    --red: #f7768e;
+    --yellow: #e0af68;
+    --orange: #ff9e64;
+    --purple: #bb9af7;
+    --cyan: #7dcfff;
+    --font-mono: 'JetBrains Mono', 'Consolas', monospace;
+    --font-sans: 'Noto Sans JP', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-mono);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ── Header ── */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 16px;
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+    min-height: 44px;
+  }
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .logo {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 2px;
+  }
+
+  .logo span {
+    color: var(--text-dim);
+    font-weight: 400;
+    font-size: 11px;
+    margin-left: 8px;
+    letter-spacing: 0;
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .user-name {
+    font-size: 12px;
+    color: var(--text-dim);
+    font-family: var(--font-sans);
+  }
+
+  .save-indicator {
+    font-size: 11px;
+    color: var(--text-dim);
+    transition: color 0.3s;
+  }
+
+  .save-indicator.saving { color: var(--yellow); }
+  .save-indicator.saved { color: var(--green); }
+  .save-indicator.error { color: var(--red); }
+
+  .btn {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    padding: 5px 12px;
+    border: 1px solid var(--border);
+    background: var(--bg-elevated);
+    color: var(--text);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .btn:hover {
+    background: var(--bg-hover);
+    border-color: var(--accent-dim);
+  }
+
+  .btn-accent {
+    background: var(--accent-dim);
+    border-color: var(--accent);
+    color: var(--text-bright);
+  }
+
+  .btn-accent:hover {
+    background: var(--accent);
+    color: var(--bg);
+  }
+
+  /* ── Shortcut Bar ── */
+  .shortcut-bar {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 16px;
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+    overflow-x: auto;
+  }
+
+  .shortcut-item {
+    font-size: 11px;
+    color: var(--text-dim);
+    white-space: nowrap;
+    padding: 2px 6px;
+    border-radius: 3px;
+  }
+
+  .shortcut-item kbd {
+    display: inline-block;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 0 4px;
+    font-size: 10px;
+    color: var(--accent);
+    font-family: var(--font-mono);
+    margin-right: 3px;
+  }
+
+  /* ── Editor ── */
+  .editor-container {
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+  }
+
+  #editor {
+    width: 100%;
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 14px;
+    line-height: 1.7;
+    padding: 12px 16px;
+    border: none;
+    outline: none;
+    resize: none;
+    tab-size: 4;
+    white-space: pre;
+    overflow-x: auto;
+    overflow-y: auto;
+  }
+
+  #editor::selection {
+    background: var(--accent-dim);
+  }
+
+  /* ── Status Bar ── */
+  .status-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 3px 16px;
+    background: var(--bg-surface);
+    border-top: 1px solid var(--border);
+    font-size: 11px;
+    color: var(--text-dim);
+    flex-shrink: 0;
+  }
+
+  .status-left, .status-right {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  /* ── Login Screen ── */
+  .login-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    gap: 32px;
+    background: var(--bg);
+  }
+
+  .login-logo {
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 4px;
+  }
+
+  .login-desc {
+    font-size: 14px;
+    color: var(--text-dim);
+    font-family: var(--font-sans);
+    text-align: center;
+    line-height: 1.7;
+  }
+
+  .btn-google {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 28px;
+    font-size: 14px;
+    font-family: var(--font-sans);
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    color: var(--text-bright);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-google:hover {
+    background: var(--bg-hover);
+    border-color: var(--accent);
+    transform: translateY(-1px);
+  }
+
+  .btn-google svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  /* ── Dialog ── */
+  .dialog-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .dialog-overlay.active {
+    display: flex;
+  }
+
+  .dialog {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+    min-width: 300px;
+    max-width: 400px;
+  }
+
+  .dialog h3 {
+    font-size: 14px;
+    color: var(--text-bright);
+    margin-bottom: 12px;
+    font-weight: 600;
+  }
+
+  .dialog input[type="text"],
+  .dialog input[type="number"] {
+    width: 100%;
+    padding: 8px 10px;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 4px;
+    outline: none;
+  }
+
+  .dialog input:focus {
+    border-color: var(--accent);
+  }
+
+  .dialog-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 14px;
+  }
+
+  /* ── Toast ── */
+  .toast {
+    position: fixed;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-size: 13px;
+    font-family: var(--font-sans);
+    padding: 8px 20px;
+    border-radius: 6px;
+    opacity: 0;
+    transition: all 0.3s;
+    z-index: 200;
+    pointer-events: none;
+  }
+
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* ── Loading ── */
+  .loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    font-size: 14px;
+    color: var(--text-dim);
+  }
+
+  .loading::after {
+    content: '';
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-left: 10px;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--text-dim); }
+</style>
+</head>
+<body>
+
+<!-- Loading -->
+<div id="loading" class="loading">読み込み中</div>
+
+<!-- Login -->
+<div id="login-screen" class="login-screen" style="display:none;">
+  <div class="login-logo">TRITASK</div>
+  <div class="login-desc">
+    テキストベースのタスク管理ツール<br>
+    キーボードショートカットでサクサク操作
+  </div>
+  <button class="btn-google" id="btn-login">
+    <svg viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+    Google でログイン
+  </button>
+</div>
+
+<!-- App -->
+<div id="app" style="display:none; height:100vh; display:none; flex-direction:column;">
+  <div class="header">
+    <div class="header-left">
+      <div class="logo">TRITASK <span>web</span></div>
+      <span class="save-indicator" id="save-indicator"></span>
+    </div>
+    <div class="header-right">
+      <span class="user-name" id="user-name"></span>
+      <button class="btn" id="btn-export" title="テキストファイルとしてエクスポート">Export</button>
+      <button class="btn" id="btn-logout">Logout</button>
+    </div>
+  </div>
+
+  <div class="shortcut-bar">
+    <span class="shortcut-item"><kbd>Ctrl+Enter</kbd> 追加</span>
+    <span class="shortcut-item"><kbd>Ctrl+S</kbd> 開始</span>
+    <span class="shortcut-item"><kbd>Ctrl+E</kbd> 終了</span>
+    <span class="shortcut-item"><kbd>Ctrl+D</kbd> 日付変更</span>
+    <span class="shortcut-item"><kbd>Ctrl+↑↓</kbd> 行移動</span>
+    <span class="shortcut-item"><kbd>Ctrl+Shift+S</kbd> ソート</span>
+    <span class="shortcut-item"><kbd>Ctrl+Shift+D</kbd> 複製</span>
+    <span class="shortcut-item"><kbd>Ctrl+Shift+X</kbd> 行削除</span>
+  </div>
+
+  <div class="editor-container">
+    <textarea id="editor" spellcheck="false"></textarea>
+  </div>
+
+  <div class="status-bar">
+    <div class="status-left">
+      <span id="status-line">行: 1</span>
+      <span id="status-tasks">タスク: 0</span>
+      <span id="status-today">今日: 0</span>
+      <span id="status-done">完了: 0</span>
+    </div>
+    <div class="status-right">
+      <span id="status-date"></span>
+    </div>
+  </div>
+</div>
+
+<!-- Walk Day Dialog -->
+<div class="dialog-overlay" id="walk-dialog">
+  <div class="dialog">
+    <h3>日付変更（Walk Day）</h3>
+    <p style="font-size:12px; color:var(--text-dim); margin-bottom:10px; font-family:var(--font-sans);">
+      日数を入力（+1 = 明日、-1 = 昨日、0 = 今日）<br>
+      または yyyy/mm/dd 形式で直接指定
+    </p>
+    <input type="text" id="walk-input" placeholder="例: 1, -3, 2026/04/01">
+    <div class="dialog-actions">
+      <button class="btn" id="walk-cancel">キャンセル</button>
+      <button class="btn btn-accent" id="walk-ok">OK</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- Firebase SDK -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+  import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+  import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+
+  // ── Firebase Config ──
+  const firebaseConfig = {
+    apiKey: "AIzaSyA4J10WimhpWtfdwqJHBDxNmPwF4WVJnPg",
+    authDomain: "tritask-web.firebaseapp.com",
+    projectId: "tritask-web",
+    storageBucket: "tritask-web.firebasestorage.app",
+    messagingSenderId: "610643806865",
+    appId: "1:610643806865:web:1b6816ad4ee5b6b93c0d30",
+    measurementId: "G-NRSFKX34R0"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  const provider = new GoogleAuthProvider();
+
+  // ── DOM ──
+  const $loading = document.getElementById('loading');
+  const $loginScreen = document.getElementById('login-screen');
+  const $app = document.getElementById('app');
+  const $editor = document.getElementById('editor');
+  const $userName = document.getElementById('user-name');
+  const $saveIndicator = document.getElementById('save-indicator');
+  const $statusLine = document.getElementById('status-line');
+  const $statusTasks = document.getElementById('status-tasks');
+  const $statusToday = document.getElementById('status-today');
+  const $statusDone = document.getElementById('status-done');
+  const $statusDate = document.getElementById('status-date');
+  const $toast = document.getElementById('toast');
+  const $walkDialog = document.getElementById('walk-dialog');
+  const $walkInput = document.getElementById('walk-input');
+
+  // ── State ──
+  let currentUser = null;
+  let saveTimeout = null;
+  const SAVE_DEBOUNCE = 500;
+
+  // ── Helpers ──
+  function today() {
+    const d = new Date();
+    return formatDate(d);
+  }
+
+  function formatDate(d) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${y}/${m}/${dd}`;
+  }
+
+  function dayOfWeek(dateStr) {
+    const d = new Date(dateStr.replace(/\//g, '-'));
+    return ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][d.getDay()];
+  }
+
+  function nowTime() {
+    const d = new Date();
+    return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+  }
+
+  function addDays(dateStr, n) {
+    const d = new Date(dateStr.replace(/\//g, '-'));
+    d.setDate(d.getDate() + n);
+    return formatDate(d);
+  }
+
+  function parseTaskLine(line) {
+    // Format: <sort_key> <date> <dow> [start] [end] <taskname> [attrs...]
+    // Example: 2 2026/03/17 Mon 09:00 09:30 タスク名 rep:1
+    // Example: 2 2026/03/17 Mon              タスク名
+    // Example:                               INBOX行（区切り）
+    const m = line.match(/^(\d)\s+(\d{4}\/\d{2}\/\d{2})\s+(\w{3})\s+(\d{2}:\d{2})\s+(\d{2}:\d{2})\s+(.*)$/);
+    if (m) {
+      return { sort: m[1], date: m[2], dow: m[3], start: m[4], end: m[5], task: m[6], raw: line, hasTimes: true };
+    }
+    const m2 = line.match(/^(\d)\s+(\d{4}\/\d{2}\/\d{2})\s+(\w{3})\s{12}(.*)$/);
+    if (m2) {
+      return { sort: m2[1], date: m2[2], dow: m2[3], start: null, end: null, task: m2[4], raw: line, hasTimes: false };
+    }
+    const m3 = line.match(/^(\d)\s+(\d{4}\/\d{2}\/\d{2})\s+(\w{3})\s+(.*)$/);
+    if (m3) {
+      return { sort: m3[1], date: m3[2], dow: m3[3], start: null, end: null, task: m3[4], raw: line, hasTimes: false };
+    }
+    return null;
+  }
+
+  function buildTaskLine(sort, date, dow, start, end, task) {
+    if (start && end) {
+      return `${sort} ${date} ${dow} ${start} ${end} ${task}`;
+    }
+    return `${sort} ${date} ${dow}            ${task}`;
+  }
+
+  function getDefaultContent() {
+    const t = today();
+    const tom = addDays(t, 1);
+    const past = addDays(t, -1);
+    const dowT = dayOfWeek(t);
+    const dowTom = dayOfWeek(tom);
+    const dowPast = dayOfWeek(past);
+    return [
+      `                              ---- INBOX`,
+      ``,
+      `1 ${t} ${dowT} 00:00 00:00  ---- TODAY DONE hold:0`,
+      ``,
+      `2 ${t} ${dowT}              ---- TODAY TODO hold:0`,
+      ``,
+      `3 ${tom} ${dowTom}              ---- TOMORROW TODO hold:1`,
+      ``,
+      `4 ${past} ${dowPast} 00:00 00:00  ---- YESTERDAY DONE`,
+      ``,
+    ].join('\n');
+  }
+
+  // ── Toast ──
+  function showToast(msg) {
+    $toast.textContent = msg;
+    $toast.classList.add('show');
+    setTimeout(() => $toast.classList.remove('show'), 2000);
+  }
+
+  // ── Firebase Operations ──
+  async function loadData(uid) {
+    try {
+      const snap = await getDoc(doc(db, 'users', uid));
+      if (snap.exists()) {
+        return snap.data().content || '';
+      }
+      return null;
+    } catch (e) {
+      console.error('Load error:', e);
+      showToast('データの読み込みに失敗しました');
+      return null;
+    }
+  }
+
+  async function saveData(uid, content) {
+    $saveIndicator.textContent = '保存中...';
+    $saveIndicator.className = 'save-indicator saving';
+    try {
+      await setDoc(doc(db, 'users', uid), {
+        content,
+        updatedAt: serverTimestamp()
+      });
+      $saveIndicator.textContent = '保存済';
+      $saveIndicator.className = 'save-indicator saved';
+      setTimeout(() => {
+        $saveIndicator.textContent = '';
+      }, 2000);
+    } catch (e) {
+      console.error('Save error:', e);
+      $saveIndicator.textContent = '保存失敗';
+      $saveIndicator.className = 'save-indicator error';
+    }
+  }
+
+  function scheduleSave() {
+    if (!currentUser) return;
+    clearTimeout(saveTimeout);
+    saveTimeout = setTimeout(() => {
+      saveData(currentUser.uid, $editor.value);
+    }, SAVE_DEBOUNCE);
+  }
+
+  // ── Tritask Operations ──
+  function getLines() {
+    return $editor.value.split('\n');
+  }
+
+  function setLines(lines, cursorLine) {
+    const prev = $editor.selectionStart;
+    $editor.value = lines.join('\n');
+    if (cursorLine !== undefined) {
+      let pos = 0;
+      for (let i = 0; i < cursorLine && i < lines.length; i++) {
+        pos += lines[i].length + 1;
+      }
+      $editor.selectionStart = $editor.selectionEnd = pos;
+    } else {
+      $editor.selectionStart = $editor.selectionEnd = Math.min(prev, $editor.value.length);
+    }
+    scheduleSave();
+    updateStatus();
+  }
+
+  function getCurrentLineIndex() {
+    const text = $editor.value;
+    const pos = $editor.selectionStart;
+    return text.substring(0, pos).split('\n').length - 1;
+  }
+
+  function addTask() {
+    const lines = getLines();
+    const idx = getCurrentLineIndex();
+    const t = today();
+    const dow = dayOfWeek(t);
+    const newLine = buildTaskLine('2', t, dow, null, null, '新しいタスク');
+    lines.splice(idx + 1, 0, newLine);
+    setLines(lines, idx + 1);
+    // Select "新しいタスク" for easy editing
+    const lineStart = $editor.value.split('\n').slice(0, idx + 1).join('\n').length + 1;
+    const taskStart = lines[idx + 1].indexOf('新しいタスク');
+    $editor.selectionStart = lineStart + taskStart;
+    $editor.selectionEnd = lineStart + taskStart + '新しいタスク'.length;
+    $editor.focus();
+    showToast('タスクを追加しました');
+  }
+
+  function startTask() {
+    const lines = getLines();
+    const idx = getCurrentLineIndex();
+    const parsed = parseTaskLine(lines[idx]);
+    if (!parsed) { showToast('タスク行ではありません'); return; }
+    if (parsed.start && parsed.start !== '00:00') { showToast('既に開始済みです'); return; }
+
+    const time = nowTime();
+    lines[idx] = buildTaskLine(parsed.sort, parsed.date, parsed.dow, time, null, parsed.task);
+    setLines(lines);
+    $editor.focus();
+    showToast(`開始: ${time}`);
+  }
+
+  function endTask() {
+    const lines = getLines();
+    const idx = getCurrentLineIndex();
+    const parsed = parseTaskLine(lines[idx]);
+    if (!parsed) { showToast('タスク行ではありません'); return; }
+    if (!parsed.start || parsed.start === '00:00') { showToast('先にタスクを開始してください'); return; }
+    if (parsed.end && parsed.end !== '00:00') { showToast('既に終了済みです'); return; }
+
+    const time = nowTime();
+    // Set sort key to 1 (done)
+    lines[idx] = buildTaskLine('1', parsed.date, parsed.dow, parsed.start, time, parsed.task);
+    setLines(lines);
+    $editor.focus();
+    showToast(`終了: ${time}`);
+  }
+
+  function duplicateTask() {
+    const lines = getLines();
+    const idx = getCurrentLineIndex();
+    const parsed = parseTaskLine(lines[idx]);
+    if (!parsed) { showToast('タスク行ではありません'); return; }
+
+    const t = today();
+    const dow = dayOfWeek(t);
+    const newLine = buildTaskLine('2', t, dow, null, null, parsed.task);
+    lines.splice(idx + 1, 0, newLine);
+    setLines(lines, idx + 1);
+    $editor.focus();
+    showToast('タスクを複製しました');
+  }
+
+  function deleteLine() {
+    const lines = getLines();
+    const idx = getCurrentLineIndex();
+    if (lines.length <= 1) return;
+    lines.splice(idx, 1);
+    setLines(lines, Math.min(idx, lines.length - 1));
+    $editor.focus();
+    showToast('行を削除しました');
+  }
+
+  function moveLine(dir) {
+    const lines = getLines();
+    const idx = getCurrentLineIndex();
+    const newIdx = idx + dir;
+    if (newIdx < 0 || newIdx >= lines.length) return;
+    [lines[idx], lines[newIdx]] = [lines[newIdx], lines[idx]];
+    setLines(lines, newIdx);
+    $editor.focus();
+  }
+
+  function openWalkDialog() {
+    const lines = getLines();
+    const idx = getCurrentLineIndex();
+    const parsed = parseTaskLine(lines[idx]);
+    if (!parsed) { showToast('タスク行ではありません'); return; }
+
+    $walkDialog.classList.add('active');
+    $walkInput.value = '';
+    $walkInput.focus();
+  }
+
+  function applyWalkDay() {
+    const val = $walkInput.value.trim();
+    if (!val) return;
+
+    const lines = getLines();
+    const idx = getCurrentLineIndex();
+    const parsed = parseTaskLine(lines[idx]);
+    if (!parsed) return;
+
+    let newDate;
+    if (val.match(/^\d{4}\/\d{2}\/\d{2}$/)) {
+      newDate = val;
+    } else {
+      const n = parseInt(val, 10);
+      if (isNaN(n)) { showToast('無効な入力です'); return; }
+      if (n === 0) {
+        newDate = today();
+      } else {
+        newDate = addDays(parsed.date, n);
+      }
+    }
+
+    const newDow = dayOfWeek(newDate);
+    lines[idx] = buildTaskLine(parsed.sort, newDate, newDow, parsed.start, parsed.end, parsed.task);
+    setLines(lines);
+    $walkDialog.classList.remove('active');
+    $editor.focus();
+    showToast(`日付: ${newDate}`);
+  }
+
+  function sortTasks() {
+    const lines = getLines();
+    const t = today();
+
+    // Separate separator lines (containing ----) and task lines
+    // We'll do a proper tritask sort:
+    // Sort key determines section, then date, then within same date keep order
+    const parsed = lines.map((line, i) => {
+      const p = parseTaskLine(line);
+      return { line, parsed: p, origIndex: i };
+    });
+
+    // Sort: by sort_key first, then by date
+    // sort_key: 1 = done today, 2 = today todo, 3 = tomorrow+, 4 = yesterday done
+    // But we need to recalculate sort keys based on actual dates
+    const result = [];
+    const inbox = [];
+    const todayDone = [];
+    const todayTodo = [];
+    const futureTodo = [];
+    const pastDone = [];
+    const other = []; // non-task lines not associated with sections
+
+    for (const item of parsed) {
+      if (!item.parsed) {
+        // Could be separator, blank line, or inbox text
+        other.push(item);
+        continue;
+      }
+
+      const p = item.parsed;
+      const taskDate = p.date;
+      const hasBothTimes = p.start && p.end && p.start !== '00:00' && p.end !== '00:00';
+      const isSeparator = p.task.includes('----');
+
+      if (isSeparator) {
+        other.push(item);
+        continue;
+      }
+
+      if (hasBothTimes && taskDate === t) {
+        // Done today
+        const newLine = buildTaskLine('1', p.date, p.dow, p.start, p.end, p.task);
+        todayDone.push(newLine);
+      } else if (hasBothTimes && taskDate < t) {
+        // Done in past
+        const newLine = buildTaskLine('4', p.date, p.dow, p.start, p.end, p.task);
+        pastDone.push(newLine);
+      } else if (taskDate <= t) {
+        // Today (or overdue -> treat as today)
+        const newLine = buildTaskLine('2', t, dayOfWeek(t), p.start, p.end, p.task);
+        todayTodo.push(newLine);
+      } else {
+        // Future
+        const newLine = buildTaskLine('3', p.date, p.dow, p.start, p.end, p.task);
+        futureTodo.push(newLine);
+      }
+    }
+
+    // Sort future by date
+    futureTodo.sort((a, b) => {
+      const da = a.substring(2, 12);
+      const db = b.substring(2, 12);
+      return da.localeCompare(db);
+    });
+
+    // Sort past done by date descending
+    pastDone.sort((a, b) => {
+      const da = a.substring(2, 12);
+      const db = b.substring(2, 12);
+      return db.localeCompare(da);
+    });
+
+    // Rebuild with separators
+    const tom = addDays(t, 1);
+    const past = addDays(t, -1);
+    const dowT = dayOfWeek(t);
+    const dowTom = dayOfWeek(tom);
+    const dowPast = dayOfWeek(past);
+
+    // Find inbox lines (lines before first task-like separator)
+    const inboxLines = [];
+    for (const item of other) {
+      if (item.parsed && item.parsed.task.includes('----')) break;
+      inboxLines.push(item.line);
+    }
+
+    const sorted = [
+      `                              ---- INBOX`,
+      ``,
+      ...inboxLines.filter(l => !l.includes('---- INBOX')),
+      `1 ${t} ${dowT} 00:00 00:00  ---- TODAY DONE hold:0`,
+      ``,
+      ...todayDone,
+      `2 ${t} ${dowT}              ---- TODAY TODO hold:0`,
+      ``,
+      ...todayTodo,
+      `3 ${tom} ${dowTom}              ---- TOMORROW TODO hold:1`,
+      ``,
+      ...futureTodo,
+      `4 ${past} ${dowPast} 00:00 00:00  ---- YESTERDAY DONE`,
+      ``,
+      ...pastDone,
+    ];
+
+    setLines(sorted);
+    $editor.focus();
+    showToast('ソートしました');
+  }
+
+  // ── Status Bar ──
+  function updateStatus() {
+    const lines = getLines();
+    const idx = getCurrentLineIndex();
+    const t = today();
+    let taskCount = 0;
+    let todayCount = 0;
+    let doneCount = 0;
+
+    for (const line of lines) {
+      const p = parseTaskLine(line);
+      if (p && !p.task.includes('----')) {
+        taskCount++;
+        if (p.date === t && !(p.start && p.end && p.start !== '00:00' && p.end !== '00:00')) {
+          todayCount++;
+        }
+        if (p.start && p.end && p.start !== '00:00' && p.end !== '00:00') {
+          doneCount++;
+        }
+      }
+    }
+
+    $statusLine.textContent = `行: ${idx + 1}`;
+    $statusTasks.textContent = `タスク: ${taskCount}`;
+    $statusToday.textContent = `今日: ${todayCount}`;
+    $statusDone.textContent = `完了: ${doneCount}`;
+    $statusDate.textContent = today();
+  }
+
+  // ── Export ──
+  function exportFile() {
+    const blob = new Blob([$editor.value], { type: 'text/plain' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `tritask_${today().replace(/\//g, '')}.trita`;
+    a.click();
+    showToast('エクスポートしました');
+  }
+
+  // ── Keyboard Shortcuts ──
+  $editor.addEventListener('keydown', (e) => {
+    // Ctrl+Enter: Add task
+    if (e.ctrlKey && e.key === 'Enter') {
+      e.preventDefault();
+      addTask();
+      return;
+    }
+    // Ctrl+S: Start task (not browser save)
+    if (e.ctrlKey && !e.shiftKey && e.key === 's') {
+      e.preventDefault();
+      startTask();
+      return;
+    }
+    // Ctrl+E: End task
+    if (e.ctrlKey && !e.shiftKey && e.key === 'e') {
+      e.preventDefault();
+      endTask();
+      return;
+    }
+    // Ctrl+D: Walk day
+    if (e.ctrlKey && !e.shiftKey && e.key === 'd') {
+      e.preventDefault();
+      openWalkDialog();
+      return;
+    }
+    // Ctrl+Shift+S: Sort
+    if (e.ctrlKey && e.shiftKey && e.key === 'S') {
+      e.preventDefault();
+      sortTasks();
+      return;
+    }
+    // Ctrl+Shift+D: Duplicate
+    if (e.ctrlKey && e.shiftKey && e.key === 'D') {
+      e.preventDefault();
+      duplicateTask();
+      return;
+    }
+    // Ctrl+Shift+X: Delete line
+    if (e.ctrlKey && e.shiftKey && e.key === 'X') {
+      e.preventDefault();
+      deleteLine();
+      return;
+    }
+    // Ctrl+Up: Move line up
+    if (e.ctrlKey && e.key === 'ArrowUp') {
+      e.preventDefault();
+      moveLine(-1);
+      return;
+    }
+    // Ctrl+Down: Move line down
+    if (e.ctrlKey && e.key === 'ArrowDown') {
+      e.preventDefault();
+      moveLine(1);
+      return;
+    }
+  });
+
+  // Walk dialog events
+  document.getElementById('walk-cancel').addEventListener('click', () => {
+    $walkDialog.classList.remove('active');
+    $editor.focus();
+  });
+
+  document.getElementById('walk-ok').addEventListener('click', applyWalkDay);
+
+  $walkInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); applyWalkDay(); }
+    if (e.key === 'Escape') { $walkDialog.classList.remove('active'); $editor.focus(); }
+  });
+
+  // Editor events
+  $editor.addEventListener('input', () => {
+    scheduleSave();
+    updateStatus();
+  });
+
+  $editor.addEventListener('click', updateStatus);
+  $editor.addEventListener('keyup', (e) => {
+    if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) {
+      updateStatus();
+    }
+  });
+
+  // Export
+  document.getElementById('btn-export').addEventListener('click', exportFile);
+
+  // ── Auth ──
+  document.getElementById('btn-login').addEventListener('click', async () => {
+    try {
+      await signInWithPopup(auth, provider);
+    } catch (e) {
+      console.error('Login error:', e);
+      showToast('ログインに失敗しました');
+    }
+  });
+
+  document.getElementById('btn-logout').addEventListener('click', async () => {
+    await signOut(auth);
+  });
+
+  onAuthStateChanged(auth, async (user) => {
+    $loading.style.display = 'none';
+
+    if (user) {
+      currentUser = user;
+      $loginScreen.style.display = 'none';
+      $app.style.display = 'flex';
+      $userName.textContent = user.displayName || user.email;
+
+      // Load data
+      const content = await loadData(user.uid);
+      if (content !== null) {
+        $editor.value = content;
+      } else {
+        // New user - set default content
+        $editor.value = getDefaultContent();
+        await saveData(user.uid, $editor.value);
+      }
+
+      updateStatus();
+      $editor.focus();
+    } else {
+      currentUser = null;
+      $loginScreen.style.display = 'flex';
+      $app.style.display = 'none';
+      $editor.value = '';
+    }
+  });
+</script>
+
+</body>
+</html>

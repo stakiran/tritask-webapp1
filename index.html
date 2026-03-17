@@ -562,26 +562,6 @@
     return `${sort} ${date} ${dow}             ${task}`;
   }
 
-  function getDefaultContent() {
-    const t = today();
-    const tom = addDays(t, 1);
-    const past = addDays(t, -1);
-    const dowT = dayOfWeek(t);
-    const dowTom = dayOfWeek(tom);
-    const dowPast = dayOfWeek(past);
-    return [
-      `                              ---- INBOX`,
-      ``,
-      `1 ${t} ${dowT} 00:00 00:00  ---- TODAY DONE hold:0`,
-      ``,
-      `2 ${t} ${dowT}             ---- TODAY TODO hold:0`,
-      ``,
-      `3 ${tom} ${dowTom}             ---- TOMORROW TODO hold:1`,
-      ``,
-      `4 ${past} ${dowPast} 00:00 00:00  ---- YESTERDAY DONE`,
-      ``,
-    ].join('\n');
-  }
 
   // ── Toast ──
   function showToast(msg) {
@@ -1046,7 +1026,7 @@
     if (content !== null) {
       $editor.value = content;
     } else {
-      $editor.value = getDefaultContent();
+      $editor.value = '';
       await saveData('local', $editor.value);
     }
 
@@ -1085,7 +1065,7 @@
         if (content !== null) {
           $editor.value = content;
         } else {
-          $editor.value = getDefaultContent();
+          $editor.value = '';
           await saveData(user.uid, $editor.value);
         }
 

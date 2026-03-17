@@ -529,6 +529,10 @@
     if (m) {
       return { sort: m[1], date: m[2], dow: m[3], start: m[4], end: m[5], task: m[6], raw: line, hasTimes: true };
     }
+    const m1b = line.match(/^(\d)\s+(\d{4}\/\d{2}\/\d{2})\s+(\w{3})\s+(\d{2}:\d{2})\s{7}(.*)$/);
+    if (m1b) {
+      return { sort: m1b[1], date: m1b[2], dow: m1b[3], start: m1b[4], end: null, task: m1b[5], raw: line, hasTimes: true };
+    }
     const m2 = line.match(/^(\d)\s+(\d{4}\/\d{2}\/\d{2})\s+(\w{3})\s{12}(.*)$/);
     if (m2) {
       return { sort: m2[1], date: m2[2], dow: m2[3], start: null, end: null, task: m2[4], raw: line, hasTimes: false };
@@ -543,6 +547,9 @@
   function buildTaskLine(sort, date, dow, start, end, task) {
     if (start && end) {
       return `${sort} ${date} ${dow} ${start} ${end} ${task}`;
+    }
+    if (start) {
+      return `${sort} ${date} ${dow} ${start}       ${task}`;
     }
     return `${sort} ${date} ${dow}            ${task}`;
   }
